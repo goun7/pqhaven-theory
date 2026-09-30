@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pqhaven"
+version = "2.0.0"
+description = "Autonomous Cryptographic Bill of Materials (CBOM) Discovery & Post-Quantum Migration Decision Engine"
+readme = "PQHAVEN.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [
+    { name = "PQHaven Authors", email = "engineering@pqhaven.io" }
+]
+dependencies = [
+    "pydantic>=2.7.0",
+    "click>=8.1.0",
+    "rich>=13.7.0",
+    "cryptography>=43.0.0",
+    "anyio>=4.3.0"
+]
+
+[project.scripts]
+pqscan = "pqhaven.cli:main"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
+pythonpath = ["src", "."]

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Node / Solidity
+node_modules/
+artifacts/
+cache/
+typechain-types/
+
+# Foundry / Solidity
+out/
+lib/
+broadcast/
+deps/
+
+# Docker
+.docker/
+
+# Secrets
+.env
+.env.local
+*.pem
+*.key
+secrets.json
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# DERS-34: test/demo .db dosyalari UNTRACKED birakilir (*.db KATILMAZ)

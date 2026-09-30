@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  pqscan:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pqhaven:latest
+    container_name: pqhaven-scanner
+    volumes:
+      - ./:/workspace/repo:ro
+      - ./output:/workspace/output:rw
+    command:
+      - "scan"
+      - "--path"
+      - "/workspace/repo"
+      - "--output-cbom"
+      - "/workspace/output/cbom.json"
+      - "--output-html"
+      - "/workspace/output/kokpit.html"
+      - "--output-csv"
+      - "/workspace/output/envanter.csv"
+    restart: "no"
+
+  cockpit-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pqhaven:latest
+    container_name: pqhaven-cockpit
+    ports:
+      - "8443:8443"
+    command:
+      - "serve"
+      - "--port"
+      - "8443"
+      - "--no-open-browser"
+    restart: unless-stopped
