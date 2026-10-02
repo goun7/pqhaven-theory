@@ -67,6 +67,57 @@ Bu proje, **`pqhaven/25-pqhaven-x402`** (75 puan) projesinin **teorik kardeşidi
   (agent kimlikleri uzun süreli geçerli olmalı — harvest-now-decrypt-later
   ödeme geçmişini de tehdit eder).
 
+## Akademik Kaynaklar (2024-2026)
+
+Bu çalışma aşağıdaki araştırmaya dayanır (tüm bağlantılar canlı olarak
+doğrulanmıştır — `https://arxiv.org/abs/...` → HTTP 200):
+
+- [1] **Quantum-Safe Hybrid Key Exchanges with KEM-Based Authentication** —
+  Battarbee, Striecks, Perret, Ramacher, Verhaeghe, arXiv (cs.CR) 2024.
+  [arXiv:2411.04030](https://arxiv.org/abs/2411.04030)
+  *Hibrit PQ TLS:* KEM tabanlı kimlik doğrulamalı hibrit anahtar değişimi —
+  PQHaven'in hibrit TLS kod noktası önerilerinin temeli.
+- [2] **Classifying Implementations of Cryptographic Primitives and Protocols
+  that Use Post-Quantum Algorithms** — Mallick, Nita-Rotaru, Kundu, Kompella,
+  arXiv (cs.CR) 2025.
+  [arXiv:2503.17830](https://arxiv.org/abs/2503.17830)
+  *Keşif:* kriptografik ilkel/protokol uygulamalarının sınıflandırılması —
+  `scanner.py` ile elde edilen envanterin yorumlanmasını destekler.
+- [3] **Post-Quantum Cryptography and Quantum-Safe Security: A Comprehensive
+  Survey** — Chhetri, Somvanshi, Hebli, Brotee, Das, arXiv (cs.CR) 2025.
+  [arXiv:2510.10436](https://arxiv.org/abs/2510.10436)
+  *Arka plan:* NIST PQC standardizasyonu (ML-KEM/ML-DSA) ve RSA/ECC üzerindeki
+  kuantum tehdidi (Shor/Grover) için genel çerçeve.
+- [4] **Quantifying quantum risk: a measure of crypto agility** —
+  Wilson-Shah, arXiv (cs.CR) 2026.
+  [arXiv:2606.17116](https://arxiv.org/abs/2606.17116)
+  *Risk skorlama:* kuantum riskinin ölçülmesi ve kripto-çeviklik metriği —
+  Mosca PQRI ve CRITICAL/HIGH/TRANSITIONAL/READY derecelendirmesi ile paralel.
+- [5] **Post-Quantum Discovery as a Governance Capability: Evidence-Based
+  Cryptographic Visibility and Exposure Prioritisation in a Critical Service
+  Provider** — Zelenovic, Taghizadeh, Pena-Gonzalez, Gomez Garcia, Preneel,
+  arXiv (cs.CR) 2026.
+  [arXiv:2605.16549](https://arxiv.org/abs/2605.16549)
+  *CBOM:* kanıt temelli kriptografik görünürlük ve maruziyet önceliklendirmesi
+  — CycloneDX 1.6 CBOM çıktısının yönetişim gerekçesi.
+- [6] **Measurement Study of Post-Quantum Readiness of Internet: 2026** —
+  Dubey, Varshney, arXiv (cs.CR) 2026.
+  [arXiv:2606.16473](https://arxiv.org/abs/2606.16473)
+  *Ağ probu:* internet çapında PQ hazırlık ölçüm yöntemleri —
+  `network.py` ile canlı TLS 1.3/SSH/QUIC/IKEv2 problamasını yönlendirir.
+- [7] **Signature Placement in Post-Quantum TLS Certificate Hierarchies: An
+  Experimental Study of ML-DSA and SLH-DSA in TLS 1.3 Authentication** —
+  Delgado Jiménez, arXiv (cs.CR) 2026.
+  [arXiv:2604.06100](https://arxiv.org/abs/2604.06100)
+  *NIST PQC:* ML-DSA ve SLH-DSA imzalarının TLS 1.3 sertifika hiyerarşisinde
+  konumlandırılması — `remediator.py` düzeltme önerileri için deneysel veri.
+- [8] **Transcript-Bound Combiners for Downgrade-Resilient Hybrid Post-Quantum
+  Key Establishment: Definition, Proof, and Embedded-Device Cost** —
+  Gupta, Rana, arXiv (cs.CR) 2026.
+  [arXiv:2609.21273](https://arxiv.org/abs/2609.21273)
+  *Hibrit PQ TLS:* downgrade saldırılarına dayanıklı hibrit birleştiriciler —
+  geçiş döneminde klasik+PQ hibrit kullanımının güvenlik gerekçesi.
+
 ## Durum ve Lisans
 
 - **Sürüm:** 2.0.0 — teorik araştırma varyantı.
