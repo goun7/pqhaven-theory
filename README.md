@@ -47,6 +47,26 @@ Sonuç: `57 passed` — temel modeller, Mosca denklemleri, motor, tarayıcı, a�
 
 Bu proje, **`pqhaven/25-pqhaven-x402`** (75 puan) projesinin **teorik kardeşidir** (theoretical sibling). x402 varyantı üretim/ödeme (x402 protokolü) entegrasyonuna odaklanırken; `pqhaven-theory` varyantı post-quantum teorisini, Mosca risk modelini ve Monte Carlo simülasyonunu araştırma odağı olarak alır. Her iki proje aynı `pqhaven` çekirdeğini paylaşır.
 
+## Akademik & teknik temel
+
+- **Mosca's quantum risk model** — "when will a quantum computer be
+  able to break RSA/ECC, and how long must my data stay secret?"
+  PQHaven bu modelin parametrelerini (harvest-now-decrypt-later
+  penceresi) kullanarak önceliklendirme yapar.
+- **NIST PQC standardization** — ML-KEM (Kyber) ve ML-DSA (Dilithium)
+  NIST FIPS 203/204 standartları; PQHaven bu algoritmaların
+  keşfini ve CBOM çıktısını üretir.
+- **CBOM (Cryptographic Bill of Materials)** — CycloneDX tabanlı
+  kriptografik envanter: bir sistemin nerede hangi algoritmayı
+  kullandığını belgeleyen makine-okunur çıktı.
+- **Monte Carlo simülasyonu** — geçiş zamanlaması belirsizliğini
+  modellemek için: quantum kapasite tahminini olasılıksal bir
+  dağılım olarak alır, "kriptografik borç" skoru üretir.
+- **x402 ile bağlantı** — [25-pqhaven-x402](../../02_sahis/25-pqhaven-x402)
+  üretim varyantı, x402 ödemelerinde **quantum-safe imzaları** kullanır
+  (agent kimlikleri uzun süreli geçerli olmalı — harvest-now-decrypt-later
+  ödeme geçmişini de tehdit eder).
+
 ## Durum ve Lisans
 
 - **Sürüm:** 2.0.0 — teorik araştırma varyantı.
