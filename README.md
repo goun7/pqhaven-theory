@@ -31,21 +31,44 @@ pqscan serve --port 8080   # Yönetici kokpiti (HTML rapor)
 
 Alternatif olarak Docker: `docker compose up` (bkz. `docker-compose.yml`).
 
-Ana modüller (`src/pqhaven/`): `engine.py` (Mosca + Monte Carlo), `scanner.py` (yerel keşif), `network.py` (canlı uç nokta problama), `models.py` (Pydantic modelleri), `remediator.py` (düzeltme önerileri), `daemon.py` (sürekli izleme), `cockpit.py` (HTML rapor), `cli.py` (`pqscan`).
+Ana modüller (`src/pqhaven/`): `engine.py` (Mosca + Monte Carlo), `scanner.py` (yerel keşif), `network.py` (canlı uç nokta problama), `models.py` (Pydantic modelleri), `remediator.py` (düzeltme önerileri), `daemon.py` (sürekli izleme), `cockpit.py` (HTML rapor), `mesh_anchor.py` (TamgaProtocol kanıt-anchor köprüsü), `cli.py` (`pqscan`).
 
 ## Test Durumu
 
-**57 test passed** (pytest, `tests/` altında 5 dosya: core, scanner, network+cockpit, cli, autonomous).
+**60 test passed** (pytest, `tests/` altında 6 dosya: core, scanner, network+cockpit, cli, autonomous, mesh_anchor).
 
 ```bash
 python3 -m pytest -p no:cacheprovider --tb=no -q
 ```
 
-Sonuç: `57 passed` — temel modeller, Mosca denklemleri, motor, tarayıcı, ağ probları ve CLI komutları kapsanıyor.
+Sonuç: `60 passed` — temel modeller, Mosca denklemleri, motor, tarayıcı, ağ probları, CLI komutları ve mesh anchor köprüsü kapsanıyor.
 
 ## İlişki
 
 Bu proje, **`pqhaven/25-pqhaven-x402`** (75 puan) projesinin **teorik kardeşidir** (theoretical sibling). x402 varyantı üretim/ödeme (x402 protokolü) entegrasyonuna odaklanırken; `pqhaven-theory` varyantı post-quantum teorisini, Mosca risk modelini ve Monte Carlo simülasyonunu araştırma odağı olarak alır. Her iki proje aynı `pqhaven` çekirdeğini paylaşır.
+
+## Mesh Bağlantısı: TamgaProtocol Kanıt-Anchoru
+
+TAMGA-MESH bağlantı matrisinde PQHaven **post-quantum** katmanıdır;
+`05_acik_kaynak/TamgaProtocol` mesh'in **kalıcı kanıt-anchor** katmanı.
+`src/pqhaven/mesh_anchor.py` bu iki katmanı birleştirir — "PQ tarayıcı +
+Merkle kökü" deseninin mesh'teki doğal kapanması:
+
+- Bir `AssessmentReport`'un CBOM Merkle kökünü + PQRI'sini Tamga'nın
+  hash-zincirlenmiş `ledger.jsonl` kanıt modelinde **bayt-uyumlu** kayda
+  dönüştürür (`build_anchor_record`).
+- Kayıtlar Tamga'nın `tamga_runner._verify_chain` / `tamga_verify_mini`
+  zincir kuralını kullanır: `h = sha256(prev + jcs(rec))`, `seq` 1'den
+  başlar, RFC 8785 (JCS) canonicalization.
+- `verify_chain` stdlib-only bağımsız doğrulama sağlar — karşı taraf
+  PQHaven veya Tamga kurmadan kanıtı doğrular.
+- JCS implementasyonu `tamga_canon` ile **bayt-parite**'dir
+  (`tests/test_mesh_anchor.py` makine-çekler).
+
+**Neden değerli:** Mosca tezine göre "harvest now, decrypt later" tehditi
+yalnızca verileri değil, *neyin ne zaman savunmasız olduğu* kaydını da
+tehdit eder. CBOM Merkle kökünü o anın kanıtına sabitleyerek geriye-dönük
+yeniden-yazımı ("zaten PQ-hazırdık") tespit-edilebilir kılar.
 
 ## Akademik & teknik temel
 
