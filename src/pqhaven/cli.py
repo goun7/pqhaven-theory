@@ -765,8 +765,20 @@ def gatekeep(path: str, max_pqri: float, fail_on_shor: bool, install_hook: bool)
         hook_path.write_text(hook_content, encoding="utf-8")
         try:
             hook_path.chmod(0o755)
-        except Exception:
-            pass
+        except Exception as exc:
+            # DALGA-C-2 (PQH-CLI-1) DUZELTILDI: chmod başarısız olursa "✅ kuruldu"
+            # basılıyordu — güvenlik-kapısı fiilen-kapalıyken yeşil-ışık. Artık
+            # fail-closed: kanca çalıştırılabilir değilse kurulum BAŞARISIZ sayılır.
+            raise click.ClickException(
+                f"Pre-commit kancası yazıldı ama çalıştırılabilir yapılamadı "
+                f"(chmod hatası: {exc}). Elle düzelt: chmod +x {hook_path}"
+            )
+        # çalıştırılabilir-bit gerçekten-set-edildi-mi doğrula
+        if not hook_path.stat().st_mode & 0o111:
+            raise click.ClickException(
+                f"Pre-commit kancası çalıştırılabilir değil: {hook_path} "
+                f"( mode={oct(hook_path.stat().st_mode)})"
+            )
         console.print(f"[bold green]✅ Git pre-commit kancası kuruldu:[/bold green] {hook_path}")
         return
 

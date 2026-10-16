@@ -4,7 +4,7 @@
 
 > **Belge Sürümü:** v17.0 (Nihai Kanonik Zirve · Doğrulanmış %100 Çalışır Master Şartname & Kod Tabanı)  
 > **Tarih Damgası:** 2026-09-16  
-> **Durum:** ÜRETİM DÜZEYİNDE ÇALIŞIR VE DOĞRULANMIŞ (100/100) — Python 3.12/3.14 Çekirdeği (%94 Test Kapsamı, 53/53 PASS) · Sıfır Mock/TODO · < %1 HITL Otonom Zero-Touch Mimarisi · 4 Formel Teorem ve Adım Adım İspatlar (Shor, Regev 2023, Mosca, M-LWE/M-SIS, Min-Cut DAG) · OWASP CycloneDX 1.6 CBOM Şartnamesi ve Otomatik Üretimi · NIST FIPS 203/204/205/206 Uyumlu Algoritma Taksonomisi · QUIC (HTTP/3) & IPsec (IKEv2) UDP Probu · Semantik Python AST Taint/Data-Flow Analizi · Git Pre-Commit & CI/CD Kapı Bekçisi (`pqscan gatekeep`) · 24/7 Otonom Sentinel Daemon & SIEM Webhook (`pqscan daemon`) · Otonom Kod İyileştirici & Birleşik Yama Motoru (`pqscan fix`) · GitHub & Jira Görev İhracı (`pqscan export-issues`) · Multi-stage Docker & docker-compose Dağıtımı · 20 Etkinlikli Kriptografik Geçiş Taksonomisi (PQC-01–PQC-20) · PQ-Policy DSL v2 EBNF Grameri · W3C Verifiable Credential v2.0 & On-Chain Akıllı Kontrat (`PQHavenRegistry.sol`) · Bağımsız Air-Gapped HTML/JS/CSS Kokpiti · Deterministik Monte Carlo 10.000 İterasyonlu Q-Day Simülatörü (`pqscan simulate`) · Merkle Kriptografik Tasdik Motoru (`pqscan attest`) · 3 Doğrulanmış Portföy Pilotu (FISP, 45-OSINT, pkgforge) · TR/EU Mevzuat ve Vergi Mimarisi (GVK 89/13, KVKK, BDDK, DDO BİGR v2, NIS2, DORA, CNSA 2.0) · E1–E40 Doğrulanmış Kanıt Defteri  
+> **Durum:** ÜRETİM DÜZEYİNDE ÇALIŞIR VE DOĞRULANMIŞ (100/100) — Python 3.12/3.14 Çekirdeği (%93 Test Kapsamı, 298/298 PASS — LEED-ölçümü 2026-10-16) · < %1 HITL Otonom Zero-Touch Mimarisi · 4 Formel Teorem ve Adım Adım İspatlar (Shor, Regev 2023, Mosca, M-LWE/M-SIS, Min-Cut DAG) · OWASP CycloneDX 1.6 CBOM Şartnamesi ve Otomatik Üretimi · NIST FIPS 203/204/205/206 Uyumlu Algoritma Taksonomisi · QUIC (HTTP/3) & IPsec (IKEv2) UDP Probu · Semantik Python AST Taint/Data-Flow Analizi · Git Pre-Commit & CI/CD Kapı Bekçisi (`pqscan gatekeep`) · 24/7 Otonom Sentinel Daemon & SIEM Webhook (`pqscan daemon`) · Otonom Kod İyileştirici & Birleşik Yama Motoru (`pqscan fix`) · GitHub & Jira Görev İhracı (`pqscan export-issues`) · Multi-stage Docker & docker-compose Dağıtımı · 20 Etkinlikli Kriptografik Geçiş Taksonomisi (PQC-01–PQC-20) · PQ-Policy DSL v2 EBNF Grameri · W3C Verifiable Credential v2.0 & On-Chain Akıllı Kontrat (`PQHavenRegistry.sol`) · Bağımsız Air-Gapped HTML/JS/CSS Kokpiti · Deterministik Monte Carlo 10.000 İterasyonlu Q-Day Simülatörü (`pqscan simulate`) · Merkle Kriptografik Tasdik Motoru (`pqscan attest`) · 3 Doğrulanmış Portföy Pilotu (FISP, 45-OSINT, pkgforge) · TR/EU Mevzuat ve Vergi Mimarisi (GVK 89/13, KVKK, BDDK, DDO BİGR v2, NIS2, DORA, CNSA 2.0) · E1–E40 Doğrulanmış Kanıt Defteri  
 > **Hat / Kategori:** 🦄 Unicorn Hattı (`b2b` / `guvenlik` · F3/F4 Hattı · Post-Kuantum Kriptografi, Siber Güvenlik, Kripto-Envanter & Regülasyon Uyumu)  
 > **Eski Kimlikler:** `03_sinyal_bekleyen/80-PQHaven` $\to$ `02_sahis/80-PQHaven` $\to$ `Fikirler.md §4.1 (PostQuantumHazine / PQReady)` $\to$ **`01_unicorn/80-PQHaven (PQHaven)`**  
 > **Marka / Etimoloji:** İngilizce *Post-Quantum* (Kuantum Sonrası) + *Haven* (Sığınak, Güvenli Liman, Kriptografik Kasa) $\to$ **PQHaven**  
@@ -921,23 +921,32 @@ Geleneksel kurumsal siber güvenlik denetimlerinde insan müdahale oranı (HITL)
 ```text
 ================================ tests coverage ================================
 Platform: Linux · Python: 3.14.7 · Pytest: 9.1.1 · Pytest-Cov: 7.1.0
-53 passed in 19.24s (100% test başarısı, Sıfır Mock, Tam Canlı Soket)
+298 passed in 15.44s (100% test başarılı; ağ-prob testleri dummy-socket
+fixture'leri ile izole çalıştırılır — "Sıfır Mock" DEĞİL)
 
 Name                        Stmts   Miss  Cover
 -----------------------------------------------
 src/pqhaven/__init__.py         1      0   100%
-src/pqhaven/cli.py            387     23    94%
+src/pqhaven/cli.py            493     39    92%
 src/pqhaven/cockpit.py         12      0   100%
 src/pqhaven/daemon.py          73      9    88%
-src/pqhaven/engine.py         148      2    99%
+src/pqhaven/engine.py         148     2    99%
+src/pqhaven/mesh_anchor.py    135     6    96%
 src/pqhaven/models.py          88      0   100%
-src/pqhaven/network.py        287     33    89%
+src/pqhaven/network.py        292     34    88%
 src/pqhaven/remediator.py      56      3    95%
-src/pqhaven/scanner.py        200      9    96%
+src/pqhaven/scanner.py        200     9    96%
 -----------------------------------------------
-TOTAL                        1252     79    94%
-============================= 53 passed in 19.24s ==============================
+TOTAL                        1498   102    93%
+============================= 298 passed in 15.44s ==============================
 ```
+
+> LEED-ölçümü 2026-10-16 (`pytest --cov=src/pqhaven`). Önceki tabro
+> "53 passed / Sıfır Mock / 94%" iddiasını içeriyordu — hem test sayısı
+> (298) hem "Sıfır Mock" ( `tests/test_network_and_cockpit.py:358-359`
+> dummy-socket fixture'leri kullanır) ile ÇELİŞİYORDU; ölçülen TABLO ile
+> değiştirildi.
+
 
 ---
 

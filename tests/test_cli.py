@@ -528,3 +528,40 @@ def test_cli_attest_with_cbom_and_contract_params(tmp_path):
 
 
 
+
+
+# --- DALGA-C-2: gatekeep --install-hook fail-closed pin'leri (PQH-CLI-1) ---
+
+def test_gatekeep_install_hook_readonly_fs_fail_closed(tmp_path, monkeypatch):
+    """PQH-CLI-1 (DALGA-C-2-DUZELTILDI): chmod başarısız olursa '✅ kuruldu'
+    yerine ClickException ( rc=1) fırlatmalı — güvenlik-kapısı kapalıyken
+    yeşil-ışık YOK."""
+    import pathlib
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    runner = CliRunner()
+    orig_chmod = pathlib.Path.chmod
+
+    def _chmod_kir(self, mode):
+        raise OSError("read-only-file-system (simule)")
+
+    monkeypatch.setattr(pathlib.Path, "chmod", _chmod_kir)
+    res = runner.invoke(main, ["gatekeep", "--path", str(repo), "--install-hook"])
+    monkeypatch.undo()
+    assert res.exit_code != 0
+    assert "kullanılamadı" in res.output or "chmod" in res.output
+    # kanca-yazıldı-ama-Calıstırılabilir-degil → fail-closed
+    assert "✅ Git pre-commit kancası kuruldu" not in res.output
+
+
+def test_gatekeep_install_hook_basarili(tmp_path):
+    """PQH-CLI-1 pozitif-yol: okunabilir-FS'te kanca-yukleme rc=0 + calisabilir."""
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    runner = CliRunner()
+    res = runner.invoke(main, ["gatekeep", "--path", str(repo), "--install-hook"])
+    assert res.exit_code == 0
+    hook = repo / ".git" / "hooks" / "pre-commit"
+    assert hook.exists()
+    assert hook.stat().st_mode & 0o111, "kanca calistirilabilir degil"
+    assert "✅ Git pre-commit kancası kuruldu" in res.output

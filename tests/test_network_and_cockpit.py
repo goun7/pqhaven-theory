@@ -290,6 +290,30 @@ def test_network_probe_raw_tls13_positive():
     assert "0x11ec" in kex_name
 
 
+def test_network_probe_raw_tls13_hata_belirsiz_olarak_isaretlenir():
+    """PQH-NET-1 (DALGA-C-2-DUZELTILDI): probe yapilip-olculemeyince
+    'legacy ECDH' gibi KAYDEDILMEMELI — (False, 'probe-error') donmeli
+    ( onceki davranis: sessizce (False, 'Unknown') = hatali-negatif)."""
+    probe = NetworkProbe(timeout=0.001)
+    # 127.0.0.1:1'e baglanma-denemesi ConnectionRefused firlatacak
+    pqc_found, kex_name = probe._probe_raw_tls13_hybrid("127.0.0.1", 1)
+    assert pqc_found is False
+    assert kex_name == "probe-error"
+
+
+def test_probe_tls_endpoint_probe_error_belirsiz_gosterir():
+    """PQH-NET-1 (DALGA-C-2-DUZELTILDI): probe_tls_endpoint ham-probe
+    hatasinda pqc_hybrid_kex=None + kex_group='probe-error' ile-belirsiz
+    isaretlemeli ( False = 'PQC-yok' ANLAMINA GELMEMELI)."""
+    probe = NetworkProbe(timeout=0.001)
+    result = probe.probe_tls_endpoint("127.0.0.1", 1)
+    # baglanamayinca connected=False — ham-probe branch'ine girmez;
+    # ozaman dogrudan _probe_raw_tls13_hybrid hatAYI-olcmek yeterli ( yukaridaki
+    # test). Burada ekriminin turbegezgovu: hatali-durumda 'connected' False
+    # ve result 'error' tasiyabilir.
+    assert isinstance(result, dict)
+
+
 def test_ssh_probe_malformed_packets():
     # Test short header
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

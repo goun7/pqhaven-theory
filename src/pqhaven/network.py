@@ -91,6 +91,12 @@ class NetworkProbe:
             if raw_pqc:
                 result["pqc_hybrid_kex"] = True
                 result["kex_group"] = negotiated_group
+            elif negotiated_group == "probe-error":
+                # DALGA-C-2 (PQH-NET-1): probe yapildi-ama-olculemedi —
+                # "legacy ECDH" gibi KAYDETME; belirsiz olarak isaretle.
+                result["pqc_hybrid_kex"] = None
+                result["kex_group"] = "probe-error"
+                result["probe_error"] = "tls13-hybrid-probe-olculemedi"
 
         return result
 
@@ -155,6 +161,12 @@ class NetworkProbe:
                         return True, "SecP256r1MLKEM768 (0x11ed)"
         except Exception as e:
             logger.debug("Raw TLS 1.3 hybrid probe skipped (%s): %s", host, e)
+            # DALGA-C-2 (PQH-NET-1) DUZELTILDI: genel-istisna yutulup
+            # "False/Unknown" donduruluyordu — gecici-ag-hatasi PQ-yetkin
+            # sunucuyu CBOM'da "legacy ECDH" olarak kaydediyordu ( hatali-
+            # negatif). Artik "Unknown" = probe-yapilmadi/degerlendirilemedi
+            # ile "probe-error" = yapildi-ama-olculemedi ayristirilir.
+            return False, "probe-error"
 
         return False, "Unknown"
 
