@@ -34,7 +34,10 @@ def generate_cockpit_html(report: AssessmentReport) -> str:
         for c in report.cbom.components
     ])
 
-    gauge_pct = min(100.0, max(0.0, float(report.pqri_score)))
+    # N/A gauge'i 0 degil "olculemedi" olarak gosterilir (false-safety engeli).
+    _pqri_na = report.pqri_score is None
+    _pqri_val = 0.0 if _pqri_na else float(report.pqri_score)
+    gauge_pct = min(100.0, max(0.0, _pqri_val))
     gauge_stroke = round((gauge_pct / 100.0) * 251.2, 2)
 
     html = f"""<!DOCTYPE html>
@@ -207,7 +210,7 @@ def generate_cockpit_html(report: AssessmentReport) -> str:
     }}
     .gauge-bar {{
       fill: none;
-      stroke: {'#f43f5e' if report.pqri_score >= 75 else '#f59e0b' if report.pqri_score >= 50 else '#10b981'};
+      stroke: {'#64748b' if _pqri_na else '#f43f5e' if report.pqri_score >= 75 else '#f59e0b' if report.pqri_score >= 50 else '#10b981'};
       stroke-width: 8;
       stroke-dasharray: 251.2;
       stroke-dashoffset: {251.2 - gauge_stroke};
@@ -526,14 +529,14 @@ def generate_cockpit_html(report: AssessmentReport) -> str:
 
     <!-- Top KPI Row with Radial Posture Gauge -->
     <div class="kpi-grid">
-      <div class="kpi-card gauge-card {'critical' if report.pqri_score >= 75 else 'warning' if report.pqri_score >= 50 else 'ready'}">
+      <div class="kpi-card gauge-card {'na' if _pqri_na else 'critical' if _pqri_val >= 75 else 'warning' if _pqri_val >= 50 else 'ready'}">
         <svg class="gauge-svg" viewBox="0 0 100 100">
           <circle class="gauge-bg" cx="50" cy="50" r="40" />
           <circle class="gauge-bar" cx="50" cy="50" r="40" />
         </svg>
         <div>
           <div class="kpi-label">PQRI Risk İndeksi</div>
-          <div class="kpi-value">{report.pqri_score} <span style="font-size: 15px; color: var(--text-muted);">/ 100</span></div>
+          <div class="kpi-value">{'N/A' if _pqri_na else report.pqri_score} <span style="font-size: 15px; color: var(--text-muted);">{'(ölçülemedi)' if _pqri_na else '/ 100'}</span></div>
           <div class="kpi-subtext">Durum: <strong>{report.overall_grade.value}</strong></div>
         </div>
       </div>
@@ -700,7 +703,7 @@ ssl_prefer_server_ciphers on;</pre>
     const complianceFlags = {json.dumps(report.compliance_flags)};
     const targetName = "{report.target}";
     const merkleRoot = "{report.merkle_root or ''}";
-    const pqriScore = {report.pqri_score};
+    const pqriScore = {_pqri_val};
 
     let currentCategory = "all";
     let physicsActive = true;

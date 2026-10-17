@@ -12,6 +12,9 @@ class PqcRiskGrade(str, Enum):
     HIGH = "HIGH"
     TRANSITIONAL = "TRANSITIONAL"
     READY = "READY"
+    # DALGA-D10 (PQH-NET-2): kanit yetersizligi durumu - risk-konusulamaz.
+    # "READY" ile KARISTIRILAMAZ (false-safety).
+    UNKNOWN = "UNKNOWN"
 
 
 class CryptoAssetType(str, Enum):
@@ -67,12 +70,22 @@ class CycloneDxCbom(BaseModel):
 
 class AssessmentReport(BaseModel):
     target: str
-    pqri_score: float
+    pqri_score: Optional[float] = None
     overall_grade: PqcRiskGrade
     cbom: CycloneDxCbom
     hndl_vulnerability_count: int
     compliance_flags: List[str] = Field(default_factory=list)
     merkle_root: Optional[str] = None
+    # DALGA-D10 (PQH-NET-2): kanit-toplama hataliysa (ag-erisilemez, DNS basarisiz,
+    # timeout, ham-probe olculemedi) skor N/A olur - "0.0 = hazir" TEHLIKELI
+    # yalanci-yesil'den (fail-silent) kacinmak icin fail-loud tasarlandi.
+    # none_reason: None -> gercek olcum; "incomplete-evidence"/"probe-error" -> N/A.
+    none_reason: Optional[str] = None
+
+    @property
+    def pqri_is_na(self) -> bool:
+        """True => PQRI olculemedi (N/A), risk konusulamaz."""
+        return self.pqri_score is None
 
 
 class MonteCarloReport(BaseModel):

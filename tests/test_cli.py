@@ -120,15 +120,22 @@ def test_cli_scan_connected_endpoint(tmp_path):
     srv.bind(("127.0.0.1", 0))
     srv.settimeout(3.0)
     port = srv.getsockname()[1]
-    srv.listen(1)
+    srv.listen(4)
 
     def srv_worker():
-        try:
-            raw_conn, _ = srv.accept()
-            with ssl_ctx.wrap_socket(raw_conn, server_side=True) as sconn:
+        # DALGA-D10: CLI artik TLS el sikismasindan sonra bir de ham
+        # TLS1.3 0x11ec probe'u yapar. 2. baglantiyi kabul etmezsek
+        # probe RST yer ve PQRI N/A (fail-loud) olurdu.
+        for _ in range(2):
+            try:
+                raw_conn, _ = srv.accept()
+                with ssl_ctx.wrap_socket(raw_conn, server_side=True) as sconn:
+                    try:
+                        sconn.recv(2048)
+                    except Exception:
+                        pass
+            except Exception:
                 pass
-        except Exception:
-            pass
 
     t = threading.Thread(target=srv_worker)
     t.start()

@@ -39,6 +39,9 @@ class SentinelDaemon:
     def scan_cycle(self, targets: List[str], paths: List[str]) -> Dict[str, Any]:
         """Executes a single autonomous audit cycle across network endpoints and paths."""
         discovered_assets: List[Dict[str, Any]] = []
+        # DALGA-D10 (PQH-NET-2): kanit-toplama kalitesi - hic hedefe
+        # baglanilamadiysa PQRI N/A olur (fail-loud; eskiden 0.0/READY).
+        probe_health: Dict[str, int] = {"total": 0, "connected": 0, "probe_errors": 0}
 
         # 1. Network Endpoint Discovery
         for target in targets:
@@ -48,8 +51,12 @@ class SentinelDaemon:
             else:
                 host, port = target, 443
 
+            probe_health["total"] += 1
             tls_res = self.network_probe.probe_tls_endpoint(host, port)
             if tls_res.get("connected"):
+                probe_health["connected"] += 1
+                if tls_res.get("probe_error"):
+                    probe_health["probe_errors"] += 1
                 discovered_assets.append({
                     "name": f"{host}:{port}-tls-protocol",
                     "algorithm": tls_res.get("kex_group", "ECDH-X25519"),
@@ -69,7 +76,9 @@ class SentinelDaemon:
             assets = self.local_scanner.scan_directory(p)
             discovered_assets.extend(assets)
 
-        report = self.engine.assess_target("autonomous-sentinel", discovered_assets)
+        report = self.engine.assess_target(
+            "autonomous-sentinel", discovered_assets, probe_health=probe_health
+        )
         current_state = {
             "timestamp": time.time(),
             "pqri_score": report.pqri_score,
@@ -99,8 +108,20 @@ class SentinelDaemon:
             if name not in prev_assets and is_shor:
                 new_vulns.append(f"{name} ({algo})")
 
-        score_delta = round(curr.get("pqri_score", 0.0) - prev.get("pqri_score", 0.0), 2)
-        has_drift = len(new_vulns) > 0 or abs(score_delta) > 5.0
+        # DALGA-D10 (PQH-NET-2): N/A (None) skoru sayiyla cikalamaz -
+        # TypeError yerine N/A'ya gecis/kaybolus drift olarak tetiklenir.
+        prev_score = prev.get("pqri_score")
+        curr_score = curr.get("pqri_score")
+        if prev_score is None or curr_score is None:
+            if (prev_score is None) != (curr_score is None):
+                has_drift = True
+                score_delta = 0.0 if curr_score is None else -1000.0
+            else:
+                has_drift = len(new_vulns) > 0  # ikisi de N/A: sadece yeni vuln drift
+                score_delta = 0.0
+        else:
+            score_delta = round(curr_score - prev_score, 2)
+            has_drift = len(new_vulns) > 0 or abs(score_delta) > 5.0
 
         return {
             "has_drift": has_drift,
@@ -122,7 +143,9 @@ class SentinelDaemon:
                 "newVulnerabilitiesCount": len(drift["new_vulnerabilities"]),
                 "newVulnerabilities": drift["new_vulnerabilities"],
             },
-            "alertLevel": "CRITICAL" if state["pqri_score"] >= self.threshold else "INFO",
+            # DALGA-D10 (PQH-NET-2): None (N/A) >= threshold kiyaslamasi
+            # TypeError firlatir - N/A her zaman CRITICAL seviyesinde uyar.
+            "alertLevel": "CRITICAL" if (state["pqri_score"] is None or state["pqri_score"] >= self.threshold) else "INFO",
         }
 
         try:

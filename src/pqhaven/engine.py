@@ -88,6 +88,14 @@ class PQScanEngine:
         "sntrup761x25519-sha512@openssh.com": {"nist_level": 3, "hybrid": True, "standard": "OpenSSH 9.0+"},
     }
 
+    # DALGA-D10 (PQH-NET-2): hedef-kaniti hic toplanamadiysa (ag-erisilemez /
+    # DNS / timeout) CBOM bos kalir. Eskiden bos-CBOM => PQRI 0.0 + READY +
+    # "Uyumsuzluk Yok" basiliyordu - fail-silent yalanci-yesil. Artik
+    # assess_target(..., probe_health={...}) ile kanit-durumu bildirilir:
+    #   connected_count>0           -> gercek olcum (eski davranis)
+    #   connected_count==0 & total>0 -> hicbir hedefe baglanilamadi => N/A
+    PROBE_HEALTH_DEFAULT: Dict[str, int] = {"total": 0, "connected": 0, "probe_errors": 0}
+
     def assess_target(
         self,
         target: str,
@@ -95,8 +103,14 @@ class PQScanEngine:
         shelf_life_years: float = 10.0,
         migration_time_years: float = 3.0,
         crqc_arrival_years: float = 7.5,
+        probe_health: Optional[Dict[str, int]] = None,
     ) -> AssessmentReport:
-        """Runs compliance audit, calculates PQRI, builds CycloneDX 1.6 CBOM, and computes Merkle Root."""
+        """Runs compliance audit, calculates PQRI, builds CycloneDX 1.6 CBOM, and computes Merkle Root.
+
+        DALGA-D10 (PQH-NET-2): ``probe_health`` kanit-toplama kalitesini bildirir.
+        En az bir hedefe baglanilmaya calisildi (total>0) ve hepsi basarisiz olduysa
+        (connected==0) PQRI eenus "0.0/READY" yerine N/A olur (fail-loud).
+        """
         components: List[CryptoComponent] = []
         dependencies: List[CbomDependency] = []
         hndl_count = 0
@@ -177,6 +191,31 @@ class PQScanEngine:
             if hndl_count == 0 and vulnerable_count == 0:
                 pqri = min(pqri, 15.0)
         grade = grade_pqri(pqri)
+        none_reason: Optional[str] = None
+
+        # DALGA-D10 (PQH-NET-2) fail-loud: kanit-toplama tam-basarisizsa
+        # PQRI "0.0/READY" degil N/A olur - risk konusulamaz.
+        ph = dict(self.PROBE_HEALTH_DEFAULT)
+        if probe_health:
+            ph.update({k: v for k, v in probe_health.items() if v is not None})
+        attempted = ph.get("total", 0) or 0
+        connected = ph.get("connected", 0) or 0
+        probe_errors = ph.get("probe_errors", 0) or 0
+        if attempted > 0 and connected == 0 and not components:
+            # Hicbir hedefe baglanilamadi (ag-erisilemez / DNS / timeout):
+            # bos kanit uzerinden "hazir" karari verilemez.
+            pqri = None
+            none_reason = "incomplete-evidence"
+            grade = PqcRiskGrade.UNKNOWN
+        elif connected > 0 and probe_errors > 0:
+            # Baglanildi ama en az bir olcum yapilamadi (ham-probe RST/timeout):
+            # kesin "PQC-hazir" kaniti yok, bu yuzden derece belirsiz.
+            pqri = None
+            none_reason = "probe-error"
+            grade = PqcRiskGrade.UNKNOWN
+        if pqri is None:
+            assert none_reason  # N/A her zaman bir sebeple gelir
+            compliance_flags.append(f"PQRI_NA_{none_reason.upper()}")
 
         # Regulatory and standard compliance checks
         if hndl_count > 0:
@@ -212,7 +251,8 @@ class PQScanEngine:
             cbom=cbom,
             hndl_vulnerability_count=hndl_count,
             compliance_flags=compliance_flags,
-            merkle_root=merkle_root
+            merkle_root=merkle_root,
+            none_reason=none_reason,
         )
 
     def compute_cbom_merkle_root(self, cbom: CycloneDxCbom) -> str:
@@ -339,7 +379,10 @@ class PQScanEngine:
         subject = {
             "id": f"did:pqhaven:target:{hashlib.sha256(report.target.encode()).hexdigest()[:16]}",
             "targetEndpoint": report.target,
+            # DALGA-D10 (PQH-NET-2): N/A skoru None olarak zincirler -
+            # "hazir" (0.0) yanilgisi engellenir.
             "pqriScore": report.pqri_score,
+            "pqriIsNa": report.pqri_is_na,
             "overallGrade": report.overall_grade.value,
             "cbomMerkleRoot": f"0x{merkle}",
             "hndlVulnerabilities": report.hndl_vulnerability_count,

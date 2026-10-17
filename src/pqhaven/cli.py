@@ -83,6 +83,9 @@ def scan(
 
     assets: List[Dict[str, Any]] = []
     primary_target_name = target or network or path or "system"
+    # DALGA-D10 (PQH-NET-2): kanit-toplama kalitesini olc - hic hedefe
+    # baglanilamadiysa PQRI N/A olur (fail-loud, eskiden 0.0/READY).
+    probe_health: Dict[str, int] = {"total": 0, "connected": 0, "probe_errors": 0}
 
     # Network scanning
     if endpoints:
@@ -110,6 +113,7 @@ def scan(
                 ])
             else:
                 probe = NetworkProbe()
+                probe_health["total"] += 1
                 if ep_port == 22:
                     with Progress(SpinnerColumn(style="cyan"), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
                         t_task = progress.add_task(f"[cyan]SSH_MSG_KEXINIT el sıkışması ({clean_host}:{ep_port})...[/cyan]", total=None)
@@ -121,6 +125,7 @@ def scan(
                         if len(endpoints) == 1 and not path:
                             raise click.ClickException(f"Hedefe bağlanılamadı: {err_msg}")
                         continue
+                    probe_health["connected"] += 1
                     pqc_kex = probe_result.get("pqc_hybrid_kex", False)
                     assets.append({
                         "name": f"{clean_host}-ssh-kex",
@@ -146,6 +151,9 @@ def scan(
                         if len(endpoints) == 1 and not path:
                             raise click.ClickException(f"Hedefe bağlanılamadı: {err_msg}")
                         continue
+                    probe_health["connected"] += 1
+                    if probe_result.get("probe_error"):
+                        probe_health["probe_errors"] += 1
 
                     kex_name = probe_result.get("kex_group", "ECDH-X25519")
                     assets.append({
@@ -178,9 +186,26 @@ def scan(
         shelf_life_years=shelf_life,
         migration_time_years=migration_time,
         crqc_arrival_years=crqc_arrival,
+        probe_health=probe_health,
     )
 
     _render_report_table(report)
+
+    # DALGA-D10 (PQH-NET-2) fail-loud: kanit-toplama tam-basarisizsa
+    # (denendiginde hic hedefe baglanilamadi) rc!=0 ile biter - "0.0/READY"
+    # raporu yalanci-yesil kapisi acik birakilamaz. Yerel --path taramasi
+    # varsa (kanit mevcut) N/A'ya dusmez, sadece rc=0 ile uyarilir.
+    if report.pqri_is_na and not path:
+        # DALGA-D10: iki ayri N/A sebebi var - mesaj karistirmasin
+        if probe_health["connected"] == 0:
+            neden = "hicbir hedefe baglanilamadi (ag/DNS/timeout)"
+        else:
+            neden = f"baglanan {probe_health['connected']} hedeften ham-probe olcumu basarisiz ({report.none_reason})"
+        raise click.ClickException(
+            "PQRI olculemedi (N/A): " + neden
+            + f" (denenen={probe_health['total']}, baglanan={probe_health['connected']}). "
+            "Hedeflerin erisilebilir oldugundan emin olun veya teshis icin --demo / --path kullanin."
+        )
 
     if output_cbom:
         with open(output_cbom, "w", encoding="utf-8") as f:
@@ -466,6 +491,7 @@ def attest(
     engine = PQScanEngine()
     assets = []
     report_target = target or "cbom-attestation"
+    probe_health: Optional[Dict[str, int]] = None  # DALGA-D10: None = kanit local-CBOM'dan
 
     if cbom:
         with open(cbom, "r", encoding="utf-8") as f:
@@ -522,14 +548,24 @@ def attest(
                     "type": "certificate",
                     "key_size": cert["key_size"],
                 })
-        report = engine.assess_target(clean_host, assets)
+            probe_health = {
+                "total": 1,
+                "connected": 1,
+                "probe_errors": 1 if probe_result.get("probe_error") else 0,
+            }
+        report = engine.assess_target(
+            clean_host,
+            assets,
+            probe_health=probe_health,
+        )
 
     vc = engine.generate_verifiable_credential(report, issuer_did=issuer_did)
 
     console.print(Panel.fit(
         f"[bold green]✨ Kriptografik Tasdik Başarıyla Üretildi![/bold green]\n"
         f"Hedef: [bold white]{report.target}[/bold white]\n"
-        f"PQRI Skoru: [bold yellow]{report.pqri_score} / 100[/bold yellow] ({report.overall_grade.value})\n"
+        # DALGA-D10 (PQH-NET-2): N/A icin "None / 100" basma
+        f"PQRI Skoru: [bold yellow]{'N/A' if report.pqri_is_na else f'{report.pqri_score} / 100'}[/bold yellow] ({report.overall_grade.value})\n"
         f"CBOM Merkle Root: [bold cyan]0x{report.merkle_root}[/bold cyan]\n"
         f"W3C VC ID: [dim]{vc.id}[/dim]\n"
         f"On-Chain Kontrat: [dim]0x446B847e096B408B48B4bEeeFd0F4D3C23B99511 (PQHavenRegistry)[/dim]",
@@ -542,6 +578,8 @@ def attest(
             "HIGH": 1,
             "TRANSITIONAL": 2,
             "READY": 3,
+            # DALGA-D10 (PQH-NET-2): N/A 0 (CRITICAL gibi) - hazir degil
+            "UNKNOWN": 0,
         }
         entity_id = "0x" + hashlib.sha256(report.target.encode("utf-8")).hexdigest()
         cbom_merkle_root = f"0x{report.merkle_root}" if report.merkle_root else "0x" + "00" * 32
@@ -646,11 +684,22 @@ def _render_report_table(report):
         "HIGH": "bold orange3",
         "TRANSITIONAL": "bold yellow",
         "READY": "bold green",
+        # DALGA-D10 (PQH-NET-2): N/A kirmizi-beyaz - "hazir" rengi DEGIL
+        "UNKNOWN": "bold white on red",
     }
     gcolor = color_map.get(report.overall_grade.value, "white")
 
-    table.add_row("PQRI Risk Skoru", f"{report.pqri_score} / 100")
-    table.add_row("Kuantum Hazırlık Derecesi", f"[{gcolor}]{report.overall_grade.value}[/{gcolor}]")
+    # DALGA-D10 (PQH-NET-2): N/A icin "None / 100" basmak TEHLIKELI
+    # (None sayi degil; "0.0" gibi okunabilir). Skor yoksa N/A bas.
+    # getattr: geri-uyumluluk (dummy report nesneleri yeni alani tasiyamayabilir).
+    pqri_na = bool(getattr(report, "pqri_is_na", report.pqri_score is None))
+    none_reason = getattr(report, "none_reason", None)
+    pqri_cell = "N/A (olculemedi)" if pqri_na else f"{report.pqri_score} / 100"
+    grade_cell = f"[{gcolor}]{report.overall_grade.value}[/{gcolor}]"
+    if pqri_na and none_reason:
+        grade_cell += f" [bright_red]({none_reason})[/bright_red]"
+    table.add_row("PQRI Risk Skoru", pqri_cell)
+    table.add_row("Kuantum Hazırlık Derecesi", grade_cell)
     table.add_row("HNDL Tehditli Varlık", str(report.hndl_vulnerability_count))
     table.add_row("Toplam CBOM Varlığı", str(len(report.cbom.components)))
     table.add_row("CBOM Merkle Root", f"[cyan]0x{report.merkle_root}[/cyan]" if report.merkle_root else "Yok")
@@ -788,12 +837,16 @@ def gatekeep(path: str, max_pqri: float, fail_on_shor: bool, install_hook: bool)
     report = engine.assess_target("gatekeeper-audit", assets)
 
     has_shor = report.hndl_vulnerability_count > 0
-    score_exceeded = report.pqri_score > max_pqri
+    # DALGA-D10 (PQH-NET-2): N/A (None) > max_pqri kiyaslamasi TypeError -
+    # kanit yetersizligi skipped (False) yerine tehlikeli kabul edilmeli.
+    score_exceeded = (report.pqri_score is not None and report.pqri_score > max_pqri)
+    score_na = report.pqri_score is None
 
-    if (fail_on_shor and has_shor) or score_exceeded:
+    if (fail_on_shor and has_shor) or score_exceeded or score_na:
+        pqri_txt = "N/A (ölçülemedi)" if score_na else f"{report.pqri_score} / 100"
         console.print(Panel.fit(
             f"[bold red]❌ GİT COMMIT / DERLEME REDDEDİLDİ (GATEKEEPER BLOCKED)![/bold red]\n\n"
-            f"• PQRI Skoru: [bold yellow]{report.pqri_score} / 100[/bold yellow] (İzin verilen tavan: {max_pqri})\n"
+            f"• PQRI Skoru: [bold yellow]{pqri_txt}[/bold yellow] (İzin verilen tavan: {max_pqri})\n"
             f"• Shor Zafiyetli Varlık Sayısı: [bold red]{report.hndl_vulnerability_count}[/bold red]\n\n"
             f"[dim]Kodu güvenli FIPS 203/204 algoritmalarıyla değiştirmek için:[/dim]\n"
             f"[bold cyan]pqscan fix --apply[/bold cyan]",

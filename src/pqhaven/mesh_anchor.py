@@ -200,6 +200,9 @@ def build_anchor_record(
         if hasattr(report.overall_grade, "value")
         else str(report.overall_grade)
     )
+    # DALGA-D10 (PQH-NET-2): PQRI N/A icin float(None) TypeError firlatir.
+    # Ledger'a "0.0" degil None yazilir - "hazir" yalanci-yesili engeller.
+    pqri_for_ledger = float(report.pqri_score) if report.pqri_score is not None else None
 
     record: Dict[str, Any] = {
         "op": ANCHOR_OP,
@@ -207,7 +210,7 @@ def build_anchor_record(
         "prev": prev_hash,
         "ts": ts,
         "target": report.target,
-        "pqri_score": float(report.pqri_score),
+        "pqri_score": pqri_for_ledger,
         "overall_grade": grade,
         # CBOM'un tumune yapilan commitment — "PQ tarayici + Merkle koku" deseni
         "cbom_merkle_root": merkle_root,
