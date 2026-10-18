@@ -35,13 +35,13 @@ Ana modüller (`src/pqhaven/`): `engine.py` (Mosca + Monte Carlo), `scanner.py` 
 
 ## Test Durumu
 
-**298 test passed, 0 failed rc=0** (pytest, `tests/` altında 12 dosya — LEED-ölçümü 2026-10-16; eski sayım 60 test / 6 dosyayı aşmış durumda).
+**324 test passed, 0 failed rc=0** (pytest, `tests/` altında 5 dosya — LEED-ölçümü 2026-10-18; eski sayım 298 test / 12 dosyayı aşmış durumda).
 
 ```bash
 python3 -m pytest -p no:cacheprovider --tb=no -q
 ```
 
-Sonuç: `298 passed` — temel modeller, Mosca denklemleri, motor, tarayıcı, ağ probları, CLI komutları ve mesh anchor köprüsü kapsanıyor.
+Sonuç: `324 passed` — temel modeller, Mosca denklemleri, motor, tarayıcı, ağ probları, CLI komutları ve mesh anchor köprüsü kapsanıyor.
 
 ## İlişki
 
