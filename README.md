@@ -35,7 +35,7 @@ Ana modüller (`src/pqhaven/`): `engine.py` (Mosca + Monte Carlo), `scanner.py` 
 
 ## Test Durumu
 
-**324 test passed, 0 failed rc=0** (pytest, `tests/` altında 13 dosya — LEED-ölçümü 2026-10-19 yeniden-ölçüm; eski sayım 298 test'i aşmış durumda).
+**325 test passed, 0 failed rc=0** (pytest, `tests/` altında 14 dosya — LEED-ölçümü 2026-10-20 yeniden-ölçüm; eski sayım 298 test'i aşmış durumda).
 
 ```bash
 python3 -m pytest -p no:cacheprovider --tb=no -q
