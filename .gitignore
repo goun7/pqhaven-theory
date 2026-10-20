@@ -37,3 +37,6 @@ secrets.json
 *.swp
 
 # DERS-34: test/demo .db dosyalari UNTRACKED birakilir (*.db KATILMAZ)
+dist/
+build/
+*.egg-info/
