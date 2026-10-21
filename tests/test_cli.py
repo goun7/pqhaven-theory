@@ -1,14 +1,20 @@
 """Tests for pqscan CLI commands using Click CliRunner."""
 
 from click.testing import CliRunner
+from pqhaven import __version__
 from pqhaven.cli import main
 
 
 def test_cli_version():
+    """A1c-2026-10-22: hardcoded 2.0.0 yerine __version__ ile olculur.
+
+    Bu-test-de-cift-kaynak-kusurunun-bir-yansimasiydı ( pin'siz-sovet-2.0.0
+    yaziyordu). Surum-yukselince-bu-test-stale-oluyordu; artik-kaynaktan
+    geldigi-icin-elle-bakim-gerekmez."""
     runner = CliRunner()
     result = runner.invoke(main, ["--version"])
     assert result.exit_code == 0
-    assert "2.0.0" in result.output
+    assert __version__ in result.output
 
 
 def test_cli_scan_dir_command(tmp_path):

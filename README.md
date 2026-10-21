@@ -35,7 +35,7 @@ Ana modüller (`src/pqhaven/`): `engine.py` (Mosca + Monte Carlo), `scanner.py` 
 
 ## Test Durumu
 
-**325 test passed, 0 failed rc=0** (pytest, `tests/` altında 14 dosya — LEED-ölçümü 2026-10-20 yeniden-ölçüm; eski sayım 298 test'i aşmış durumda).
+**327 test passed, 0 failed rc=0** (pytest, `tests/` altında 15 dosya — A1c-2026-10-22: sürüm-tek-kaynak-pin'i-eklendi 325→327; eski sayım 298 test'i aşmış durumda).
 
 ```bash
 python3 -m pytest -p no:cacheprovider --tb=no -q
@@ -143,6 +143,6 @@ doğrulanmıştır — `https://arxiv.org/abs/...` → HTTP 200):
 
 ## Durum ve Lisans
 
-- **Sürüm:** 2.0.0 — teorik araştırma varyantı.
+- **Sürüm:** 2.0.2 — teorik araştırma varyantı ( surum-artik TEK-KAYNAKLI: `pyproject.toml` -> `importlib.metadata` -> `__version__` -> `pqscan --version`; A1c-2026-10-22).
 - **Lisans:** Apache-2.0 (bkz. `pyproject.toml`).
 - **Detaylı dokümantasyon:** `PQHAVEN.md` (111 KB) ve `MERGEN.md`.

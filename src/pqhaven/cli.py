@@ -26,6 +26,7 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
+from pqhaven import __version__
 from pqhaven.cockpit import generate_cockpit_html
 from pqhaven.engine import PQScanEngine
 from pqhaven.network import NetworkProbe
@@ -35,7 +36,7 @@ console = Console()
 
 
 @click.group()
-@click.version_option(version="2.0.0", prog_name="pqscan")
+@click.version_option(version=__version__, prog_name="pqscan")
 def main():
     """🛡️ PQHaven: Post-Quantum Discovery, CBOM & Crypto-Agility Engine."""
     pass

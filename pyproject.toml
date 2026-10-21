@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pqhaven"
-version = "2.0.0"
+version = "2.0.2"
 description = "Autonomous Cryptographic Bill of Materials (CBOM) Discovery & Post-Quantum Migration Decision Engine"
 readme = "PQHAVEN.md"
 requires-python = ">=3.11"
