@@ -23,6 +23,14 @@ dependencies = [
 [project.scripts]
 pqscan = "pqhaven.cli:main"
 
+# G48-2026-10-22: CI `pip install -e ".[dev]"`-kuruyordu ama-dev-ekstrasi-YOKTU
+# -> sessizce-sadece-paketin-kendini-kurdu, pytest-KURULMADI -> "pytest:
+# # command not found" ( exit-127, 2-matrixin-tamaminda).
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q"
